@@ -1,0 +1,324 @@
+{
+    "0652f0c1-ee2d-4687-a4e1-7ffd5c8c98d2": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "aka_name",
+        "data": {
+            "id": "793021",
+            "person_id": "2154591",
+            "name": "Angie",
+            "imdb_index": "",
+            "name_pcode_cf": "A52",
+            "name_pcode_nf": "",
+            "surname_pcode": "",
+            "md5sum": "1f9516e858610148c44638a604e68f8f"
+        },
+        "shapley_value": 0.000468975468975469
+    },
+    "1112b940-9bc7-57f6-9dcd-23977feac8c8": {
+        "type": "times",
+        "out_edges": [
+            "0652f0c1-ee2d-4687-a4e1-7ffd5c8c98d2"
+        ]
+    },
+    "121795e9-56a7-4e57-be5d-2624fd78f46b": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "aka_name",
+        "data": {
+            "id": "793022",
+            "person_id": "2154591",
+            "name": "Ange",
+            "imdb_index": "",
+            "name_pcode_cf": "A52",
+            "name_pcode_nf": "",
+            "surname_pcode": "",
+            "md5sum": "70ddff55cbde94737024ee0750817805"
+        },
+        "shapley_value": 0.000468975468975469
+    },
+    "156f9f4c-2311-5008-a35b-ebe77012173f": {
+        "type": "times",
+        "out_edges": [
+            "b1c02a9c-e0c7-4f2c-aeef-28ce9e9e7bef"
+        ]
+    },
+    "1b8e06f0-7490-5c97-b10f-201973be6fd8": {
+        "type": "times",
+        "out_edges": [
+            "121795e9-56a7-4e57-be5d-2624fd78f46b"
+        ]
+    },
+    "1c9984ee-3bd7-5e1f-b33e-20e82a75eb9d": {
+        "type": "times",
+        "out_edges": [
+            "121795e9-56a7-4e57-be5d-2624fd78f46b"
+        ]
+    },
+    "23bd3600-f688-5f1d-968f-85f78e217b38": {
+        "type": "times",
+        "out_edges": [
+            "0652f0c1-ee2d-4687-a4e1-7ffd5c8c98d2"
+        ]
+    },
+    "2870f917-aa69-4700-aafe-ceb9f4b72fa4": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "aka_name",
+        "data": {
+            "id": "306571",
+            "person_id": "2154591",
+            "name": "Voight, Angelina Jolie",
+            "imdb_index": "",
+            "name_pcode_cf": "V2352",
+            "name_pcode_nf": "A5245",
+            "surname_pcode": "V23",
+            "md5sum": "251ea90c03ff9a410d5a6a070d1479fc"
+        },
+        "shapley_value": 0.000468975468975469
+    },
+    "302ab7dc-f39a-480d-821b-fad4020c54f9": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "company_name",
+        "data": {
+            "id": "686",
+            "name": "Paramount Home Entertainment",
+            "country_code": "[us]",
+            "imdb_id": "",
+            "name_pcode_nf": "P6535",
+            "name_pcode_sf": "P6535",
+            "md5sum": "fea424c2fb422762aaeb9da54191beb0"
+        },
+        "shapley_value": 0.038306138306138306
+    },
+    "3859b6e9-046f-4a38-8025-489782d48df9": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "role_type",
+        "data": {
+            "id": "2",
+            "role": "actress"
+        },
+        "shapley_value": 0.18098290598290598
+    },
+    "3bb9cbfc-fa10-46fb-887c-3962079eba2e": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "movie_companies",
+        "data": {
+            "id": "781252",
+            "movie_id": "2028520",
+            "company_id": "2561",
+            "company_type_id": "1",
+            "note": "(2008) (USA) (theatrical)"
+        },
+        "shapley_value": 0.020532245532245533
+    },
+    "4f4e4d6d-2e44-51d0-8f6a-1a96e84d15d6": {
+        "type": "times",
+        "out_edges": [
+            "2870f917-aa69-4700-aafe-ceb9f4b72fa4"
+        ]
+    },
+    "5026e705-c361-4139-b784-9b38c8c2c13b": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "char_name",
+        "data": {
+            "id": "2184244",
+            "name": "Tigress",
+            "imdb_index": "",
+            "imdb_id": "",
+            "name_pcode_nf": "T262",
+            "surname_pcode": "",
+            "md5sum": "b53d8dee8c0adf9573aab28b398474de"
+        },
+        "shapley_value": 0.18098290598290598
+    },
+    "5d6d51e0-cff0-4692-95c7-af4479db74f0": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "aka_name",
+        "data": {
+            "id": "793024",
+            "person_id": "2154591",
+            "name": "Voight, Angelina Jolie",
+            "imdb_index": "",
+            "name_pcode_cf": "V2352",
+            "name_pcode_nf": "A5245",
+            "surname_pcode": "V23",
+            "md5sum": "251ea90c03ff9a410d5a6a070d1479fc"
+        },
+        "shapley_value": 0.000468975468975469
+    },
+    "7b6b9ff4-5665-485c-8f3d-1e213010b0cc": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "title",
+        "data": {
+            "id": "2028520",
+            "title": "Kung Fu Panda",
+            "imdb_index": "",
+            "kind_id": "1",
+            "production_year": "2008",
+            "imdb_id": "",
+            "phonetic_code": "K5215",
+            "episode_of_id": "",
+            "season_nr": "",
+            "episode_nr": "",
+            "series_years": "",
+            "md5sum": "2d5b706ad17a75cfa5963cd4b311e612"
+        },
+        "shapley_value": 0.18098290598290598
+    },
+    "804fe09f-48cb-4a78-8cf3-9c8f7a3517fd": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "name",
+        "data": {
+            "id": "2154591",
+            "name": "Jolie, Angelina",
+            "imdb_index": "",
+            "imdb_id": "",
+            "gender": "f",
+            "name_pcode_cf": "J4524",
+            "name_pcode_nf": "A5245",
+            "surname_pcode": "J4",
+            "md5sum": "b9467483834e9c11993aa3c75623f9bc"
+        },
+        "shapley_value": 0.18098290598290598
+    },
+    "81dc4cc9-17bd-512e-957b-05499e575cfe": {
+        "type": "times",
+        "out_edges": [
+            "5d6d51e0-cff0-4692-95c7-af4479db74f0"
+        ]
+    },
+    "878a687c-d5b3-553d-9c94-4a376a74226b": {
+        "type": "times",
+        "out_edges": [
+            "b1c02a9c-e0c7-4f2c-aeef-28ce9e9e7bef"
+        ]
+    },
+    "901eefc8-17ff-4041-8088-dbc324dbe1fc": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "movie_companies",
+        "data": {
+            "id": "781250",
+            "movie_id": "2028520",
+            "company_id": "686",
+            "company_type_id": "1",
+            "note": "(2008) (USA) (DVD) (Blu-ray)"
+        },
+        "shapley_value": 0.006684981684981685
+    },
+    "9e9e57b1-7c19-5ca6-a5e4-a2973161d4f2": {
+        "type": "times",
+        "out_edges": [
+            "b1c02a9c-e0c7-4f2c-aeef-28ce9e9e7bef"
+        ]
+    },
+    "aec886eb-419a-5a31-b833-0fafe364e793": {
+        "type": "times",
+        "out_edges": [
+            "5d6d51e0-cff0-4692-95c7-af4479db74f0"
+        ]
+    },
+    "b1c02a9c-e0c7-4f2c-aeef-28ce9e9e7bef": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "aka_name",
+        "data": {
+            "id": "793023",
+            "person_id": "2154591",
+            "name": "AJ",
+            "imdb_index": "",
+            "name_pcode_cf": "A2",
+            "name_pcode_nf": "",
+            "surname_pcode": "",
+            "md5sum": "ac7938dc5e794f913ec83092efe83177"
+        },
+        "shapley_value": 0.000468975468975469
+    },
+    "b22ae9d1-878a-5443-a6ff-16ae2f240dae": {
+        "type": "times",
+        "out_edges": [
+            "0652f0c1-ee2d-4687-a4e1-7ffd5c8c98d2"
+        ]
+    },
+    "b7b9895f-df54-4303-bf81-b37b210c9bac": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "cast_info",
+        "data": {
+            "id": "15911555",
+            "person_id": "2154591",
+            "movie_id": "2028520",
+            "person_role_id": "2184244",
+            "note": "(voice)",
+            "nr_order": "3",
+            "role_id": "2"
+        },
+        "shapley_value": 0.18098290598290598
+    },
+    "b85765e7-3118-5e52-8d38-ecfa510917ab": {
+        "type": "times",
+        "out_edges": [
+            "2870f917-aa69-4700-aafe-ceb9f4b72fa4"
+        ]
+    },
+    "cd738356-6c99-443b-ab23-5a62f695a868": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "movie_companies",
+        "data": {
+            "id": "781249",
+            "movie_id": "2028520",
+            "company_id": "686",
+            "company_type_id": "1",
+            "note": "(2008) (USA) (DVD)"
+        },
+        "shapley_value": 0.006684981684981685
+    },
+    "d1ebd566-fd90-5531-b7d7-51c920bb688a": {
+        "type": "times",
+        "out_edges": [
+            "5d6d51e0-cff0-4692-95c7-af4479db74f0"
+        ]
+    },
+    "d49d11eb-091b-50c9-8739-940ddb929d3a": {
+        "type": "times",
+        "out_edges": [
+            "121795e9-56a7-4e57-be5d-2624fd78f46b"
+        ]
+    },
+    "e061784f-2350-4776-9fb3-695b0083b60c": {
+        "type": "input",
+        "out_edges": [],
+        "table_name": "company_name",
+        "data": {
+            "id": "2561",
+            "name": "Paramount Pictures",
+            "country_code": "[us]",
+            "imdb_id": "",
+            "name_pcode_nf": "P6531",
+            "name_pcode_sf": "P6531",
+            "md5sum": "366857dfcb81be550d76b5ac30b38935"
+        },
+        "shapley_value": 0.020532245532245533
+    },
+    "ed495c80-6b9d-5290-a18c-a387ba1005a5": {
+        "type": "times",
+        "out_edges": [
+            "2870f917-aa69-4700-aafe-ceb9f4b72fa4"
+        ]
+    },
+    "fa85ca4b-b2fc-52fd-93ae-0c35833b5c9f": {
+        "type": "plus",
+        "out_edges": [
+            "1c9984ee-3bd7-5e1f-b33e-20e82a75eb9d"
+        ]
+    }
+}
