@@ -17,7 +17,7 @@ def execute_query(query):
     None will be returned in the case of error during the query execution.
 
     :param query: is an SQL query.
-    :return: list of SQL results. Each result has two elements, the first is the result id, and the second is the output tuple.
+    :return: list the SQL output tuples.
     """
 
     # Return a static result for the query:
@@ -62,8 +62,7 @@ def get_contributing_facts(output_tuples):
     Given a set of output tuple ids returns information and Shapley value of contributing facts.
 
     :param output_tuples: list of output tuples ids
-    :return: a tuple with the first element is a dictionary of contributing facts ids along with their data.
-    The second element is a mapping of each output tuple to the contributing facts, along with their contribution score.
+    :return: information and Shapley value of contributing facts.
     """
 
     # Return a static result for selection of output tuples
@@ -71,10 +70,9 @@ def get_contributing_facts(output_tuples):
     # '8e3ff9a1-8614-58bc-b864-c09feaf198bb',
     # '9a0b8421-25bc-5529-8162-345a15035fda']
 
-    facts2data = json.load(open(data_path/"facts2data.json", "r"))
-    heatmap = json.load(open(data_path/"heat_map.json", "r"))
+    contribution = json.load(open(data_path/"contribution.json", "r"))
 
-    return facts2data, heatmap
+    return contribution
 
 
 def get_graph(output_tuple):
