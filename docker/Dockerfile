@@ -23,6 +23,10 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 DEBIAN_FRONTEND=noninteractive
 # Ensure that bash is the default shell
 ENV SHELL=/bin/bash
 
+# Install vim
+RUN apt-get update &&\
+    apt-get -y install vim
+
 
 ############################## GETTING ADD-ON TOOLS ##############################   
 
@@ -77,12 +81,26 @@ RUN /etc/init.d/postgresql start &&\
     psql -f /opt/provsql/test/sql/security.sql test test &&\
     psql -c "ALTER ROLE test SET search_path TO public, provsql";     
 
+
+############################## CREATE AMAZON DB  ##############################
+USER postgres
+RUN /etc/init.d/postgresql start &&\
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\    
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_description.sql &&\    
+    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
+    psql -U test -a -f /opt/shapgraph/data/amazon_prov.sql
+
+
 ############################## FINISHING THE DOCKER  ##############################   
 
 #allow access
-RUN echo "listen_addresses = '*'"  >> /etc/postgresql/${PSQL_VERSION}/main/postgresql.conf
-RUN echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
-RUN echo "host all all ::/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
+# RUN echo "listen_addresses = '*'"  >> /etc/postgresql/${PSQL_VERSION}/main/postgresql.conf
+# RUN echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
+# RUN echo "host all all ::/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
 
 USER postgres
 CMD /usr/bin/pg_ctlcluster $PSQL_VERSION main start --foreground
@@ -92,4 +110,7 @@ RUN apt-get update &&\
     apt-get -y install apache2 libapache2-mod-php php-pgsql graphviz libgraph-easy-perl
 
 # CMD /bin/bash /opt/provsql/docker/demo.sh
+
+
+
 EXPOSE 80
