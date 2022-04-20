@@ -1,16 +1,31 @@
 from flask import Flask
 from pathlib import Path
 import json
+import psycopg2
 
 app = Flask(__name__)
 
 data_path = Path("static_data")
+
+
+def get_postgres_connection(db="postgres"):
+    user = "postgres"
+    pwd = "postgres"
+    host = "localhost"
+    port = "5432"
+
+    url = 'postgresql+psycopg2://{}:{}@{}/{}?client_encoding=utf8'
+    url = url.format(user, pwd, host, port, db)
+    conn_args = 'dbname={} user={} password={} host={} port={}'
+    conn_args = conn_args.format(db, user, pwd, host, port)
+    return psycopg2.connect(conn_args)
 
 @app.route("/")
 def home():
     pass
 
 
+@app.route("/query/<string:query>/")
 def execute_query(query):
     """
     Execute an SQL query and return a list of results.
@@ -20,41 +35,10 @@ def execute_query(query):
     :return: list the SQL output tuples.
     """
 
-    # Return a static result for the query:
-    # SELECT t.title
-    # FROM aka_name AS an,
-    #      char_name AS chn,
-    #      cast_info AS ci,
-    #      company_name AS cn,
-    #      movie_companies AS mc,
-    #      name AS n,
-    #      role_type AS rt,
-    #      title AS t
-    # WHERE ci.note in ('(voice)',
-    #                   '(voice: Japanese version)',
-    #                   '(voice) (uncredited)',
-    #                   '(voice: English version)')
-    #   AND cn.country_code ='[us]'
-    #   AND mc.note IS NOT NULL
-    #   AND (mc.note like '%(USA)%'
-    #        OR mc.note like '%(worldwide)%')
-    #   AND n.gender ='f'
-    #   AND n.name like '%Ang%'
-    #   AND rt.role ='actress'
-    #   AND t.production_year BETWEEN 2005 AND 2015
-    #   AND ci.movie_id = t.id
-    #   AND t.id = mc.movie_id
-    #   AND ci.movie_id = mc.movie_id
-    #   AND mc.company_id = cn.id
-    #   AND ci.role_id = rt.id
-    #   AND n.id = ci.person_id
-    #   AND chn.id = ci.person_role_id
-    #   AND an.person_id = n.id
-    #   AND an.person_id = ci.person_id
-    # GROUP BY t.title;
+    if query is None:
+        return None
 
-    results = json.load(open(data_path/"query_answers.json", "r"))
-    return results
+    return "Hello"
 
 
 def get_contributing_facts(output_tuples):
@@ -89,3 +73,6 @@ def get_graph(output_tuple):
 
     return graph
 
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)

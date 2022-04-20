@@ -23,9 +23,10 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 DEBIAN_FRONTEND=noninteractive
 # Ensure that bash is the default shell
 ENV SHELL=/bin/bash
 
-# Install vim
+# Install vim and pip3
 RUN apt-get update &&\
-    apt-get -y install vim
+    apt-get -y install vim &&\
+    apt-get -y install python3-pip
 
 
 ############################## GETTING ADD-ON TOOLS ##############################   
@@ -82,18 +83,6 @@ RUN /etc/init.d/postgresql start &&\
     psql -c "ALTER ROLE test SET search_path TO public, provsql";     
 
 
-############################## CREATE AMAZON DB  ##############################
-USER postgres
-RUN /etc/init.d/postgresql start &&\
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\    
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_description.sql &&\    
-    psql -U test -a -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
-    psql -U test -a -f /opt/shapgraph/data/amazon_prov.sql
-
 
 ############################## FINISHING THE DOCKER  ##############################   
 
@@ -111,6 +100,18 @@ RUN apt-get update &&\
 
 # CMD /bin/bash /opt/provsql/docker/demo.sh
 
+
+############################## CREATE AMAZON DB  ##############################
+USER postgres
+RUN /etc/init.d/postgresql start &&\
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\    
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_description.sql &&\    
+    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
+    psql -U postgres -f /opt/shapgraph/data/amazon_prov.sql
 
 
 EXPOSE 80
