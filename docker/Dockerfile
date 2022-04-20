@@ -106,29 +106,34 @@ RUN /etc/init.d/postgresql start &&\
 # RUN echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
 # RUN echo "host all all ::/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
 
-USER postgres
-CMD /usr/bin/pg_ctlcluster $PSQL_VERSION main start --foreground
+#USER postgres
+#CMD /usr/bin/pg_ctlcluster $PSQL_VERSION main start --foreground
 
-USER root
-RUN apt-get update &&\
-    apt-get -y install apache2 libapache2-mod-php php-pgsql graphviz libgraph-easy-perl
+#USER root
+#RUN apt-get update &&\
+#    apt-get -y install apache2 libapache2-mod-php php-pgsql graphviz libgraph-easy-perl
 
 
 ############################## CREATE AMAZON DB  ##############################
-USER postgres
-RUN /etc/init.d/postgresql start &&\
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\    
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_description.sql &&\    
-    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
-    psql -U postgres -f /opt/shapgraph/data/amazon_prov.sql
+#USER postgres
+#RUN /etc/init.d/postgresql start &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_description.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
+#    psql -U postgres -f /opt/shapgraph/data/amazon_prov.sql
 
 EXPOSE 5432
 EXPOSE 80
 
-ENTRYPOINT [ "python3" ]
+#ENTRYPOINT [ "python3" ]
 
-CMD ["/opt/shapgraph/src/main.py" ]
+USER root
+RUN chmod 777 /opt/shapgraph/docker/start.sh
+
+USER postgres
+
+CMD ["/opt/shapgraph/docker/start.sh" ]
