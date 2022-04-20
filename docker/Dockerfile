@@ -22,13 +22,30 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 DEBIAN_FRONTEND=noninteractive
 
 # Ensure that bash is the default shell
 ENV SHELL=/bin/bash
-
-# Install vim and pip3
+        
+# Install sudo, vim and pip3
 RUN apt-get update &&\
+    apt-get -y install sudo &&\
     apt-get -y install vim &&\
     apt-get -y install python3-pip
 
+# Install libs required for scipy
+RUN apt-get update &&\ 
+    apt-get -y install --no-install-recommends gfortran libopenblas-dev liblapack-dev &&\
+    rm -rf /var/lib/apt/lists/*
 
+# Install python requierments
+RUN yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org numpy &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org scipy &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org psycopg2 &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org networkx &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pandas &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pathlib &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org tqdm &&\
+    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org flask
+
+
+    
 ############################## GETTING ADD-ON TOOLS ##############################   
 
 RUN mkdir /tmp/tools/
@@ -66,8 +83,6 @@ USER root
 RUN echo "shared_preload_libraries = 'provsql'" >> /etc/postgresql/${PSQL_VERSION}/main/postgresql.conf
 RUN echo "local all all trust" > /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
 
-EXPOSE 5432
-
 RUN cd /opt/provsql &&\
     make install
 
@@ -98,8 +113,6 @@ USER root
 RUN apt-get update &&\
     apt-get -y install apache2 libapache2-mod-php php-pgsql graphviz libgraph-easy-perl
 
-# CMD /bin/bash /opt/provsql/docker/demo.sh
-
 
 ############################## CREATE AMAZON DB  ##############################
 USER postgres
@@ -113,5 +126,9 @@ RUN /etc/init.d/postgresql start &&\
     psql -U postgres -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
     psql -U postgres -f /opt/shapgraph/data/amazon_prov.sql
 
-
+EXPOSE 5432
 EXPOSE 80
+
+ENTRYPOINT [ "python3" ]
+
+CMD ["/opt/shapgraph/src/main.py" ]
