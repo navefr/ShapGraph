@@ -50,6 +50,17 @@ RUN yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --
 
 RUN mkdir /tmp/tools/
 
+# TOOL c2d
+RUN curl 'http://reasoning.cs.ucla.edu/c2d/fetchme.php' \
+         -H 'Content-Type: application/x-www-form-urlencoded'\
+         --data 'os=Linux+i386&type=&s=&n=Pierre+Senellart+DOCKER&e=pierre@senellart.com&o=ENS'\
+         -o /tmp/c2d.zip &&\
+         unzip /tmp/c2d.zip -d /tmp/ &&\
+         rm /tmp/c2d.zip &&\
+         mv /tmp/c2d_linux /tmp/tools/c2d &&\
+         chmod a+x /tmp/tools/c2d
+
+
 # TOOL d4
 RUN cd /tmp/ &&\
     git config --global http.sslverify false &&\
@@ -98,38 +109,10 @@ RUN /etc/init.d/postgresql start &&\
     psql -c "ALTER ROLE test SET search_path TO public, provsql";     
 
 
-
-############################## FINISHING THE DOCKER  ##############################   
-
-#allow access
-# RUN echo "listen_addresses = '*'"  >> /etc/postgresql/${PSQL_VERSION}/main/postgresql.conf
-# RUN echo "host all all 0.0.0.0/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
-# RUN echo "host all all ::/0 trust" >> /etc/postgresql/${PSQL_VERSION}/main/pg_hba.conf  
-
-#USER postgres
-#CMD /usr/bin/pg_ctlcluster $PSQL_VERSION main start --foreground
-
-#USER root
-#RUN apt-get update &&\
-#    apt-get -y install apache2 libapache2-mod-php php-pgsql graphviz libgraph-easy-perl
-
-
 ############################## CREATE AMAZON DB  ##############################
-#USER postgres
-#RUN /etc/init.d/postgresql start &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_items.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_view.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_also_buy.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_category.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_feature.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_description.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/create_db/amazon_review.sql &&\
-#    psql -U postgres -f /opt/shapgraph/data/amazon_prov.sql
 
 EXPOSE 5432
 EXPOSE 80
-
-#ENTRYPOINT [ "python3" ]
 
 USER root
 RUN chmod -R 777 /opt/shapgraph/

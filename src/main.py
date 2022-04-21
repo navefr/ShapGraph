@@ -4,6 +4,7 @@ import psycopg2
 import pandas as pd
 import networkx as nx
 import json
+import subprocess
 from logging.config import dictConfig
 
 
@@ -207,6 +208,47 @@ def export_provenance(cur, provenance_hash):
     app.logger.debug("*** export_provenance: \"%s\" gates were written to %s" % (provenance_hash, str(cur_path / "gates.json")))
 
 
+def knowledge_compilation(provenance_hash, timeout=150):
+    circuit_fname = str(provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit")
+
+    app.logger.debug("*** knowledge_compilation: starting compilation of \"%s\"" % provenance_hash)
+    # subprocess.run(["d4", circuit_fname, '-out='+nnf_fname])
+    proc = None
+    try:
+        proc = subprocess.Popen(["c2d", '-in', circuit_fname, '-smooth'])
+        outs, errs = proc.communicate(timeout=timeout)
+        # proc = subprocess.Popen(["timeout", "-m", str(int(128*1024)), "-t", str(timeout), "c2d", '-in', circuit_fname, '-smooth', '-reduce'])
+        #  outs, errs = proc.communicate()
+        if not Path(circuit_fname + '.nnf').exists():
+            app.logger.debug("*** knowledge_compilation: \"%s\" compiled file is missing" % provenance_hash)
+            return "Exception - file not created"
+        app.logger.debug("*** knowledge_compilation: compiled \"%s\" successfully" % provenance_hash)
+        return "Success"
+    except subprocess.TimeoutExpired:
+        app.logger.error("*** knowledge_compilation: \"%s\" compilation timeout" % provenance_hash)
+        if proc is not None:
+            proc.kill()
+        return "Timeout"
+    except Exception as e:
+        if proc is not None:
+            proc.kill()
+        app.logger.error("*** knowledge_compilation: \"%s\" compilation failed %s" % (provenance_hash, str(e)))
+        return str(type(e))
+
+
+def calc_shapley_values(nnf_fname, gates_fname, timeout=150):
+    def calc(nnf_fname, gates_fname):
+        c_shapley = CircuitShapley(nnf_fname, gates_fname)
+        return c_shapley.shapley_values()
+
+    calc_timeout = timeout_func(timeout=timeout)(calc)
+    try:
+        shapley_values = calc_timeout(nnf_fname, gates_fname)
+    except Exception as e:
+        shapley_values = e
+
+    return shapley_values
+
 @app.route("/contributing_facts/<string:output_tuples>/")
 def get_contributing_facts(output_tuples):
     """
@@ -240,6 +282,7 @@ def get_contributing_facts(output_tuples):
 
         for output_tuple in output_tuples:
             export_provenance(cur, output_tuple)
+            knowledge_compilation(output_tuple)
             ans["outputs"][output_tuple] = []
             # TODO - this need to be contibued
 
