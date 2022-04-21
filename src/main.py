@@ -4,6 +4,25 @@ import psycopg2
 import pandas as pd
 import networkx as nx
 import json
+from logging.config import dictConfig
+
+
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['wsgi']
+    }
+})
 
 app = Flask(__name__)
 
@@ -11,7 +30,7 @@ ERROR = "Error"
 
 tables = ["items", "also_buy", "also_view", "category", "description", "feature", "review"]
 
-path = Path(".")
+path = Path("/opt/shapgraph")
 provenance_path = path/"provenance"
 provenance_path.mkdir(parents=True, exist_ok=True)
 
@@ -108,7 +127,6 @@ def execute_query(query):
     return ans
 
 
-
 def hash_dir_structure(provenance_hash):
     prefix = provenance_hash.split('-')[0]
     assert len(prefix) == 8
@@ -189,10 +207,6 @@ def export_provenance(cur, provenance_hash):
     app.logger.debug("*** export_provenance: \"%s\" gates were written to %s" % (provenance_hash, str(cur_path / "gates.json")))
 
 
-def get_output_tuple_provenance(output_tuple):
-    return None
-
-
 @app.route("/contributing_facts/<string:output_tuples>/")
 def get_contributing_facts(output_tuples):
     """
@@ -211,18 +225,38 @@ def get_contributing_facts(output_tuples):
 
     app.logger.debug("*** get_contributing_facts: parsed to %d tuples" % len(output_tuples))
 
+    ans = {ERROR: "Failed to obtain contributions"}
+
+    con, cur = None, None
+    try:
+        con, cur = get_connection_and_cursor()
+
+        app.logger.debug("*** get_contributing_facts: got cursor")
+
+        ans = {
+            "outputs": {},
+            "facts": {}
+        }
+
+        for output_tuple in output_tuples:
+            export_provenance(cur, output_tuple)
+            ans["outputs"][output_tuple] = []
+            # TODO - this need to be contibued
+
+        app.logger.debug("*** get_contributing_facts: provenance export completed")
+
+    except Exception as e:
+        app.logger.error("*** execute_query: %s" % str(e))
+    finally:
+        close_con_and_cur(con, cur)
+
     if len(output_tuples) == 0:
         return {ERROR: "Output tuples are empty"}
-
-    ans = {
-        "outputs": output_tuples,
-        "facts": {}
-    }
 
     return ans
 
 
-@app.route("/get_graph/<string:output_tuple>/")
+@app.route("/graph/<string:output_tuple>/")
 def get_graph(output_tuple):
     """
     Given id of a single output tuple return the graph of contributing facts.

@@ -132,7 +132,7 @@ EXPOSE 80
 #ENTRYPOINT [ "python3" ]
 
 USER root
-RUN chmod 777 /opt/shapgraph/docker/start.sh
+RUN chmod -R 777 /opt/shapgraph/
 
 USER postgres
 
