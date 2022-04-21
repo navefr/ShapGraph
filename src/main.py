@@ -10,9 +10,6 @@ from circuit_shapley import CircuitShapley
 from timeout import timeout as timeout_func
 
 
-proc = subprocess.Popen(["/opt/shapgraph/docker/init_amazon_db.sh"])
-outs, errs = proc.communicate(timeout=100)
-
 dictConfig({
     'version': 1,
     'formatters': {'default': {
@@ -126,7 +123,7 @@ def execute_query(query):
         }
 
         for output_tuple, values in ans["outputs"].items():
-            output_tuples_data[output_tuple] = {col: value for col, value in zip(ans[schema], values)}
+            output_tuples_data[output_tuple] = {col: value for col, value in zip(ans["schema"], values)}
 
     except Exception as e:
         app.logger.error("*** execute_query: %s" % str(e))
