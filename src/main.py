@@ -79,7 +79,7 @@ def fetch_facts_data(table_name):
             row[-1]: {
                 "table_name": table_name,
                 "data": {
-                    col: val for col, val in zip(schema[:-1], res[:-1])
+                    col: val for col, val in zip(schema[:-1], row[:-1])
                 }
             }
             for row in res
@@ -274,7 +274,7 @@ def calc_shapley_values(provenance_hash, timeout=60):
         shapley_values = calc_timeout(nnf_fname, gates)
 
         gate_id2hash = {gate_info["id"]: gate for gate, gate_info in gates.items()}
-        shapley_values = {gate_id2hash[k]: v for k, v in shapley_values.items()}
+        shapley_values = {gate_id2hash[k]: float(v) for k, v in shapley_values.items()}
 
         app.logger.debug("*** calc_shapley_values: \"%s\" shapley value computation completed successfully" % provenance_hash)
 
@@ -343,7 +343,7 @@ def get_contributing_facts(output_tuples):
 
             for fact in shapley_values:
                 if fact not in ans["facts"]:
-                    ans["facts"] = facts_data[fact]
+                    ans["facts"][fact] = facts_data[fact]
 
             output2fact_contribution[output_tuple] = shapley_values
 
