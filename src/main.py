@@ -8,6 +8,7 @@ import subprocess
 from logging.config import dictConfig
 from circuit_shapley import CircuitShapley
 from timeout import timeout as timeout_func
+import copy
 
 
 dictConfig({
@@ -376,9 +377,52 @@ def get_graph(output_tuple):
     if output_tuple is None:
         return {ERROR: "Output tuple is missing"}
 
-    graph = {}
+    app.logger.debug("*** graph: got output tuple \"%s\"" % output_tuple)
 
-    return graph
+    ans = {ERROR: "Failed to generate graph"}
+
+    con, cur = None, None
+    try:
+        con, cur = get_connection_and_cursor()
+
+        app.logger.debug("*** graph: got cursor")
+
+        ans = {}
+
+        if output_tuple not in output_tuples_data:
+            app.logger.error("*** graph: output tuple \"%s\" is invalid" % output_tuple)
+            return {ERROR: "Output tuple \"%s\" is invalid" % output_tuple}
+
+        if output_tuple not in facts_data:
+            export_provenance(cur, output_tuple)
+            knowledge_compilation(output_tuple)
+            shapley_values = calc_shapley_values(output_tuple)
+            # TODO - handle the case of an error during the computations
+
+            provenance_table_path = provenance_path / ('/'.join(hash_dir_structure(output_tuple))) / "provenance_as_a_table.csv"
+            if not provenance_table_path.exists():
+                app.logger.error("*** graph: \"%s\" provenance table is missing" % output_tuple)
+                return {ERROR: "Provenance table is missing"}
+            df = pd.read_csv(provenance_table_path)
+            
+            # TODO - complete graph creation
+
+
+        else:
+            # In case the output tuple is simply a fact from the db - it is the only contributor
+            ans = {output_tuple: copy.deepcopy(facts_data[output_tuple])}
+            ans[output_tuple]["type"] = "input"
+            ans[output_tuple]["in_edges"] = []
+            ans[output_tuple]["shapley_value"] = 1.0
+
+        app.logger.debug("*** graph: graph creation completed")
+
+    except Exception as e:
+        app.logger.error("*** graph: %s" % str(e))
+    finally:
+        close_con_and_cur(con, cur)
+
+    return ans
 
 
 if __name__ == '__main__':
