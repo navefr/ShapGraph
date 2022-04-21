@@ -6,8 +6,12 @@ import networkx as nx
 import json
 import subprocess
 from logging.config import dictConfig
+from circuit_shapley import CircuitShapley
+from timeout import timeout as timeout_func
 
 
+proc = subprocess.Popen(["/opt/shapgraph/docker/init_amazon_db.sh"])
+outs, errs = proc.communicate(timeout=100)
 
 dictConfig({
     'version': 1,
@@ -120,6 +124,10 @@ def execute_query(query):
             "schema": schema[:-1],
             "outputs": {x[-1]: x[:-1] for x in res}
         }
+
+        for output_tuple, values in ans["outputs"].items():
+            output_tuples_data[output_tuple] = {col: value for col, value in zip(ans[schema], values)}
+
     except Exception as e:
         app.logger.error("*** execute_query: %s" % str(e))
     finally:
@@ -208,18 +216,24 @@ def export_provenance(cur, provenance_hash):
     app.logger.debug("*** export_provenance: \"%s\" gates were written to %s" % (provenance_hash, str(cur_path / "gates.json")))
 
 
-def knowledge_compilation(provenance_hash, timeout=150):
-    circuit_fname = str(provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit")
-
+def knowledge_compilation(provenance_hash, timeout=60):
     app.logger.debug("*** knowledge_compilation: starting compilation of \"%s\"" % provenance_hash)
-    # subprocess.run(["d4", circuit_fname, '-out='+nnf_fname])
+
+    circuit_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit"
+    circuit_nnf_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit.nnf"
+    if not circuit_fname.exists():
+        app.logger.error("*** knowledge_compilation: \"%s\" circuit is missing" % provenance_hash)
+        return "Exception - circuit is missing"
+
+    if circuit_nnf_fname.exists():
+        app.logger.debug("*** knowledge_compilation: \"%s\" nnf already exist" % provenance_hash)
+        return "Success"
+
     proc = None
     try:
         proc = subprocess.Popen(["c2d", '-in', circuit_fname, '-smooth'])
         outs, errs = proc.communicate(timeout=timeout)
-        # proc = subprocess.Popen(["timeout", "-m", str(int(128*1024)), "-t", str(timeout), "c2d", '-in', circuit_fname, '-smooth', '-reduce'])
-        #  outs, errs = proc.communicate()
-        if not Path(circuit_fname + '.nnf').exists():
+        if not circuit_nnf_fname.exists():
             app.logger.debug("*** knowledge_compilation: \"%s\" compiled file is missing" % provenance_hash)
             return "Exception - file not created"
         app.logger.debug("*** knowledge_compilation: compiled \"%s\" successfully" % provenance_hash)
@@ -236,7 +250,20 @@ def knowledge_compilation(provenance_hash, timeout=150):
         return str(type(e))
 
 
-def calc_shapley_values(nnf_fname, gates_fname, timeout=150):
+def calc_shapley_values(provenance_hash, timeout=60):
+    app.logger.debug("*** calc_shapley_values: starting exact shapley computation for \"%s\"" % provenance_hash)
+
+    shapley_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "shapley_values.json"
+
+    if shapley_fname.exists():
+        app.logger.debug("*** calc_shapley_values: \"%s\" shapley values already exist" % provenance_hash)
+        with open(shapley_fname, "r") as f:
+            shapley_values = json.load(f)
+        return shapley_values
+
+    nnf_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit.nnf"
+    gates_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "gates.json"
+
     def calc(nnf_fname, gates_fname):
         c_shapley = CircuitShapley(nnf_fname, gates_fname)
         return c_shapley.shapley_values()
@@ -244,10 +271,18 @@ def calc_shapley_values(nnf_fname, gates_fname, timeout=150):
     calc_timeout = timeout_func(timeout=timeout)(calc)
     try:
         shapley_values = calc_timeout(nnf_fname, gates_fname)
+
+        app.logger.debug("*** calc_shapley_values: \"%s\" shapley value computation completed successfully" % provenance_hash)
+
+        with open(shapley_fname, 'w') as f:
+            json.dump(shapley_values, f, indent=4)
+
     except Exception as e:
+        app.logger.error("*** calc_shapley_values: \"%s\" shapley value computation failed %s" % (provenance_hash, str(e)))
         shapley_values = e
 
     return shapley_values
+
 
 @app.route("/contributing_facts/<string:output_tuples>/")
 def get_contributing_facts(output_tuples):
@@ -267,6 +302,9 @@ def get_contributing_facts(output_tuples):
 
     app.logger.debug("*** get_contributing_facts: parsed to %d tuples" % len(output_tuples))
 
+    if len(output_tuples) == 0:
+        return {ERROR: "Output tuples are empty"}
+
     ans = {ERROR: "Failed to obtain contributions"}
 
     con, cur = None, None
@@ -280,11 +318,33 @@ def get_contributing_facts(output_tuples):
             "facts": {}
         }
 
+        output2fact_contribution = {}
+
         for output_tuple in output_tuples:
+
+            if output_tuple not in output_tuples_data:
+                app.logger.error("*** get_contributing_facts: output tuple \"%s\" is invalid" % output_tuple)
+                return {ERROR: "Output tuple \"%s\" is invalid" % output_tuple}
+
+            ans["outputs"][output_tuple] = output_tuples_data[output_tuple]
+
             export_provenance(cur, output_tuple)
             knowledge_compilation(output_tuple)
-            ans["outputs"][output_tuple] = []
-            # TODO - this need to be contibued
+            shapley_values = calc_shapley_values(output_tuple)
+            # TODO - handle the case of an error during the computations
+
+            for fact in shapley_values:
+                if fact not in ans["facts"]:
+                    ans["facts"] = facts_data[fact]
+
+            output2fact_contribution[output_tuple] = shapley_values
+
+        for output_tuple in output_tuples:
+            for fact in ans["facts"]:
+                if fact not in output2fact_contribution[output_tuple]:
+                    output2fact_contribution[output_tuple][fact] = 0
+
+        ans["output2fact_contribution"] = output2fact_contribution
 
         app.logger.debug("*** get_contributing_facts: provenance export completed")
 
@@ -292,9 +352,6 @@ def get_contributing_facts(output_tuples):
         app.logger.error("*** execute_query: %s" % str(e))
     finally:
         close_con_and_cur(con, cur)
-
-    if len(output_tuples) == 0:
-        return {ERROR: "Output tuples are empty"}
 
     return ans
 
@@ -322,5 +379,6 @@ if __name__ == '__main__':
     for table_name in tables:
         facts_data.update(fetch_facts_data(table_name))
     app.logger.info(" =====  Loaded %d facts" % len(facts_data))
+    output_tuples_data = {}
 
     app.run(host='0.0.0.0', port=80, debug=True)
