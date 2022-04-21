@@ -261,13 +261,20 @@ def calc_shapley_values(provenance_hash, timeout=60):
     nnf_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit.nnf"
     gates_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "gates.json"
 
-    def calc(nnf_fname, gates_fname):
-        c_shapley = CircuitShapley(nnf_fname, gates_fname)
+    def calc(nnf_fname, gates):
+        c_shapley = CircuitShapley(nnf_fname,
+                                   [gate_info["id"] for gate, gate_info in gates.items() if gate_info["type"] != "input"])
         return c_shapley.shapley_values()
 
     calc_timeout = timeout_func(timeout=timeout)(calc)
     try:
-        shapley_values = calc_timeout(nnf_fname, gates_fname)
+        with open(gates_fname, "r") as f:
+            gates = json.load(f)
+
+        shapley_values = calc_timeout(nnf_fname, gates)
+
+        gate_id2hash = {gate_info["id"]: gate for gate, gate_info in gates.items()}
+        shapley_values = {gate_id2hash[k]: v for k, v in shapley_values.items()}
 
         app.logger.debug("*** calc_shapley_values: \"%s\" shapley value computation completed successfully" % provenance_hash)
 
@@ -325,10 +332,14 @@ def get_contributing_facts(output_tuples):
 
             ans["outputs"][output_tuple] = output_tuples_data[output_tuple]
 
-            export_provenance(cur, output_tuple)
-            knowledge_compilation(output_tuple)
-            shapley_values = calc_shapley_values(output_tuple)
-            # TODO - handle the case of an error during the computations
+            if output_tuple not in facts_data:
+                export_provenance(cur, output_tuple)
+                knowledge_compilation(output_tuple)
+                shapley_values = calc_shapley_values(output_tuple)
+                # TODO - handle the case of an error during the computations
+            else:
+                # In case the output tuple is simply a fact from the db - it is the only contributor
+                shapley_values = {output_tuple: 1.0}
 
             for fact in shapley_values:
                 if fact not in ans["facts"]:

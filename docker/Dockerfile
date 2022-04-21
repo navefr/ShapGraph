@@ -5,6 +5,10 @@ LABEL maintainer navefrost@mail.tau.ac.il
 COPY . /opt/shapgraph
 WORKDIR /opt/shapgraph
 
+USER root
+RUN chmod -R 777 /opt/shapgraph/
+
+
 # needed to build provsql the tools + libc6-i386 for running c2d
 RUN apt-get update &&\
     apt-get -y install git build-essential curl\
@@ -113,9 +117,6 @@ RUN /etc/init.d/postgresql start &&\
 
 EXPOSE 5432
 EXPOSE 80
-
-USER root
-RUN chmod -R 777 /opt/shapgraph/
 
 USER postgres
 

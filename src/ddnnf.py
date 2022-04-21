@@ -14,12 +14,11 @@ FALSECONST = 6
 
 class dDNNF:
 
-    def __init__(self, circuit_filepath, forget_filepath=None):
+    def __init__(self, circuit_filepath, forget_vars=None):
 
         self._forget_vars = set()
-        if forget_filepath is not None:
-            forget_df = pd.read_csv(forget_filepath, delimiter=' ', header=None)
-            self._forget_vars = set(forget_df[0].unique())
+        if forget_vars is not None:
+            self._forget_vars = set(forget_vars)
 
         self.__read_nnf__(circuit_filepath)
         self.__topsort__()

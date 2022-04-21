@@ -18,8 +18,8 @@ def comb(N, k):
 
 class CircuitShapley:
 
-    def __init__(self, circuit_filepath, forget_filepath=None):
-        self._ddnnf = dDNNF(circuit_filepath, forget_filepath)
+    def __init__(self, circuit_filepath, forget_vars=None):
+        self._ddnnf = dDNNF(circuit_filepath, forget_vars)
 
     # compute alphas and betas
     def __alphas_and_betas__(self):
