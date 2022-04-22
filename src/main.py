@@ -66,7 +66,7 @@ def get_connection_and_cursor(db="amazon"):
 
 def fetch_facts_data(table_name):
 
-    query = "select * from %s;" % table_name
+    query = "SELECT * FROM %s;" % table_name
 
     ans = None
     con, cur = None, None
@@ -208,7 +208,7 @@ def export_provenance(cur, provenance_hash):
 
     app.logger.debug("*** export_provenance: \"%s\" circuit was written to %s" % (provenance_hash, str(cur_path / "circuit")))
 
-    with open(cur_path / ("gates.json"), 'w') as f:
+    with open(cur_path / "gates.json", 'w') as f:
         json.dump(gates, f, indent=4)
 
     app.logger.debug("*** export_provenance: \"%s\" gates were written to %s" % (provenance_hash, str(cur_path / "gates.json")))
@@ -403,11 +403,23 @@ def get_graph(output_tuple):
             if not provenance_table_path.exists():
                 app.logger.error("*** graph: \"%s\" provenance table is missing" % output_tuple)
                 return {ERROR: "Provenance table is missing"}
-            df = pd.read_csv(provenance_table_path)
-            
-            # TODO - complete graph creation
 
+            prov = pd.read_csv(provenance_table_path)
 
+            for _, r in prov.iterrows():
+                node_id = r.f
+                if node_id not in ans:
+                    ans[node_id] = {
+                        "type": r.gate_type,
+                        "in_edges": []
+                    }
+                    if r.gate_type == "input":
+                        ans[node_id]["table_name"] = facts_data[node_id]["table_name"]
+                        ans[node_id]["data"] = facts_data[node_id]["data"]
+                        ans[node_id]["shapley_value"] = shapley_values[node_id]
+
+                if r.t is not None and type(r.t) == str:
+                    ans[node_id]["in_edges"].append(r.t)
         else:
             # In case the output tuple is simply a fact from the db - it is the only contributor
             ans = {output_tuple: copy.deepcopy(facts_data[output_tuple])}
