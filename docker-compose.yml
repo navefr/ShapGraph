@@ -1,0 +1,6 @@
+version: "3.9"
+services:
+  sharpgraph:
+    build: .
+    ports:
+      - "3001:80"

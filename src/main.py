@@ -437,6 +437,11 @@ def get_graph(output_tuple):
     return ans
 
 
+@app.route("/health", methods = ['GET'])
+def healthcheck():
+    return {'SUCCESS': True}
+
+
 if __name__ == '__main__':
     app.logger.info(" =====  Load facts provenance mapping ...")
     facts_data = {}
