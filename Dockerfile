@@ -10,16 +10,15 @@ RUN chmod -R 777 /opt/shapgraph/
 
 
 # needed to build provsql the tools + libc6-i386 for running c2d
-RUN apt-get update &&\
-    apt-get -y install git build-essential curl\
-               libc6-i386 unzip mercurial libgmp-dev libboost-dev
+RUN apt-get update
+
+RUN apt-get -y install git build-essential curl libc6-i386 unzip mercurial libgmp-dev libboost-dev
 
 # Specify which version we are building against
 ARG PSQL_VERSION=11
 ENV PSQL_VERSION=$PSQL_VERSION
 
-RUN apt-get update &&\
-    apt-get -y install zlib1g-dev postgresql-${PSQL_VERSION} postgresql-server-dev-${PSQL_VERSION}
+RUN apt-get -y install zlib1g-dev postgresql-${PSQL_VERSION} postgresql-server-dev-${PSQL_VERSION}
 
 # Ensure a sane environment
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 DEBIAN_FRONTEND=noninteractive
@@ -28,25 +27,17 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 DEBIAN_FRONTEND=noninteractive
 ENV SHELL=/bin/bash
         
 # Install sudo, vim and pip3
-RUN apt-get update &&\
-    apt-get -y install sudo &&\
-    apt-get -y install vim &&\
-    apt-get -y install python3-pip
+RUN apt-get -y install sudo vim python3-pip
 
 # Install libs required for scipy
-RUN apt-get update &&\ 
-    apt-get -y install --no-install-recommends gfortran libopenblas-dev liblapack-dev &&\
+RUN apt-get -y install --no-install-recommends gfortran libopenblas-dev liblapack-dev &&\
     rm -rf /var/lib/apt/lists/*
 
 # Install python requierments
-RUN yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org numpy &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org scipy &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org psycopg2 &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org networkx &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pandas &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org pathlib &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org tqdm &&\
-    yes | pip3 install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org flask
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN python3 get-pip.py
+RUN yes | pip install numpy scipy psycopg2 networkx pandas pathlib tqdm flask
+# RUN yes | pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org numpy scipy psycopg2 networkx pandas pathlib tqdm flask
 
 
     
@@ -120,4 +111,4 @@ EXPOSE 80
 
 USER postgres
 
-CMD ["/opt/shapgraph/docker/start.sh" ]
+CMD ["/opt/shapgraph/start.sh" ]
