@@ -358,7 +358,8 @@ def get_contributing_facts(output_tuples):
         app.logger.debug("*** get_contributing_facts: provenance export completed")
 
     except Exception as e:
-        app.logger.error("*** execute_query: %s" % str(e))
+        app.logger.error("*** get_contributing_facts: %s" % str(e))
+        ans = {ERROR: str(e)}
     finally:
         close_con_and_cur(con, cur)
 
@@ -431,6 +432,7 @@ def get_graph(output_tuple):
 
     except Exception as e:
         app.logger.error("*** graph: %s" % str(e))
+        ans = {ERROR: str(e)}
     finally:
         close_con_and_cur(con, cur)
 
