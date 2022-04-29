@@ -30,6 +30,7 @@ dictConfig({
 app = Flask(__name__)
 
 ERROR = "Error"
+STATUS = "status"
 
 tables = ["items", "also_buy", "also_view", "category", "description", "feature", "review"]
 
@@ -105,7 +106,7 @@ def execute_query(query):
 
     app.logger.debug("*** execute_query: processing \"%s\"" % query)
 
-    ans = {ERROR: "Error during query processing"}
+    ans = {ERROR: "Error during query processing", STATUS: 500}
     con, cur = None, None
     try:
         con, cur = get_connection_and_cursor()
@@ -120,7 +121,8 @@ def execute_query(query):
         schema = [desc[0] for desc in cur.description]
         ans = {
             "schema": schema[:-1],
-            "outputs": {x[-1]: x[:-1] for x in res}
+            "outputs": {x[-1]: x[:-1] for x in res},
+            STATUS: 200
         }
 
         for output_tuple, values in ans["outputs"].items():
@@ -310,7 +312,7 @@ def get_contributing_facts(output_tuples):
     if len(output_tuples) == 0:
         return {ERROR: "Output tuples are empty"}
 
-    ans = {ERROR: "Failed to obtain contributions"}
+    ans = {ERROR: "Failed to obtain contributions", STATUS: 500}
 
     con, cur = None, None
     try:
@@ -320,7 +322,8 @@ def get_contributing_facts(output_tuples):
 
         ans = {
             "outputs": {},
-            "facts": {}
+            "facts": {},
+            STATUS: 200
         }
 
         output2fact_contribution = {}
@@ -329,7 +332,7 @@ def get_contributing_facts(output_tuples):
 
             if output_tuple not in output_tuples_data:
                 app.logger.error("*** get_contributing_facts: output tuple \"%s\" is invalid" % output_tuple)
-                return {ERROR: "Output tuple \"%s\" is invalid" % output_tuple}
+                return {ERROR: "Output tuple \"%s\" is invalid" % output_tuple, STATUS: 500}
 
             ans["outputs"][output_tuple] = output_tuples_data[output_tuple]
 
@@ -358,8 +361,7 @@ def get_contributing_facts(output_tuples):
         app.logger.debug("*** get_contributing_facts: provenance export completed")
 
     except Exception as e:
-        app.logger.error("*** get_contributing_facts: %s" % str(e))
-        ans = {ERROR: str(e)}
+        app.logger.error("*** execute_query: %s" % str(e))
     finally:
         close_con_and_cur(con, cur)
 
@@ -376,11 +378,11 @@ def get_graph(output_tuple):
     """
 
     if output_tuple is None:
-        return {ERROR: "Output tuple is missing"}
+        return {ERROR: "Output tuple is missing", STATUS: 500}
 
     app.logger.debug("*** graph: got output tuple \"%s\"" % output_tuple)
 
-    ans = {ERROR: "Failed to generate graph"}
+    ans = {ERROR: "Failed to generate graph", STATUS: 500}
 
     con, cur = None, None
     try:
@@ -388,7 +390,7 @@ def get_graph(output_tuple):
 
         app.logger.debug("*** graph: got cursor")
 
-        ans = {}
+        ans = {STATUS: 200}
 
         if output_tuple not in output_tuples_data:
             app.logger.error("*** graph: output tuple \"%s\" is invalid" % output_tuple)
@@ -423,7 +425,7 @@ def get_graph(output_tuple):
                     ans[node_id]["in_edges"].append(r.t)
         else:
             # In case the output tuple is simply a fact from the db - it is the only contributor
-            ans = {output_tuple: copy.deepcopy(facts_data[output_tuple])}
+            ans = {output_tuple: copy.deepcopy(facts_data[output_tuple]), STATUS: 200}
             ans[output_tuple]["type"] = "input"
             ans[output_tuple]["in_edges"] = []
             ans[output_tuple]["shapley_value"] = 1.0
@@ -432,7 +434,6 @@ def get_graph(output_tuple):
 
     except Exception as e:
         app.logger.error("*** graph: %s" % str(e))
-        ans = {ERROR: str(e)}
     finally:
         close_con_and_cur(con, cur)
 
@@ -441,7 +442,7 @@ def get_graph(output_tuple):
 
 @app.route("/health", methods = ['GET'])
 def healthcheck():
-    return {'SUCCESS': True}
+    return {'SUCCESS': True, STATUS: 200}
 
 
 if __name__ == '__main__':
@@ -451,5 +452,5 @@ if __name__ == '__main__':
         facts_data.update(fetch_facts_data(table_name))
     app.logger.info(" =====  Loaded %d facts" % len(facts_data))
     output_tuples_data = {}
-
+    
     app.run(host='0.0.0.0', port=80, debug=True)
