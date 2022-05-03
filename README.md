@@ -25,6 +25,11 @@ Retool self-hosting setup documentation can be found [here](https://docs.retool.
     cd ~/github_repos/retool-onpremise
     ./install.sh
 
+#### - Open retool-onpremise `Dockerfile` for editing:
+    nano Dockerfile
+
+change X.Y.Z
+
 #### - Get Retool on-premise key [here](https://my.retool.com/)
 
 #### - Open retool-onpremise `docker.env` file for editing:
