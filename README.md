@@ -28,7 +28,7 @@ Retool self-hosting setup documentation can be found [here](https://docs.retool.
 #### - Open retool-onpremise `Dockerfile` for editing:
     nano Dockerfile
 
-change X.Y.Z
+change "X.Y.Z" to "latest"
 
 #### - Get Retool on-premise key [here](https://my.retool.com/)
 
@@ -62,9 +62,7 @@ dockers can't communicate via localhost.
     ifconfig
 copy the IPv4 address to the REST-API queries inside the Retool's ShapGraph project
 #### - Click `Edit` on the ShapGraph App
-#### - Open the bottom pannel if its not open yet
-#### - Change the next queries to use your IPv4 local address:
-#### -- execute__query -> query
-#### -- heat_map_table -> contributing_facts
-#### -- nodes_graph_data -> graph
-#### -- health
+#### - Open the left pannel in edit mode
+#### - Change the top value called ip_address_default_value to use your IPv4 local address
+
+Enjoy :)
