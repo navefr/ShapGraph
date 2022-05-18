@@ -1,2 +1,2 @@
 docker build -t shapgraph:test -f docker/Dockerfile .
-docker run -p 80:80 --name test shapgraph:test
+docker run -p 80:80 --name shapgraph navefr/shapgraph:v.01
