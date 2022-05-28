@@ -9,6 +9,8 @@ from logging.config import dictConfig
 from circuit_shapley import CircuitShapley
 from timeout import timeout as timeout_func
 import copy
+from comb_cache import CombCache
+from scipy.stats import rankdata
 
 
 dictConfig({
@@ -151,7 +153,8 @@ def export_provenance(cur, provenance_hash):
     cur_path = provenance_path / ('/'.join(hash_dir_structure(provenance_hash)))
     if cur_path.exists():
         app.logger.debug("*** export_provenance: \"%s\" provenance already exist" % provenance_hash)
-        return
+        prov = pd.read_csv(cur_path/"provenance_as_a_table.csv")
+        return prov
 
     cur_path.mkdir(parents=True, exist_ok=True)
 
@@ -214,6 +217,8 @@ def export_provenance(cur, provenance_hash):
         json.dump(gates, f, indent=4)
 
     app.logger.debug("*** export_provenance: \"%s\" gates were written to %s" % (provenance_hash, str(cur_path / "gates.json")))
+
+    return provenance
 
 
 def knowledge_compilation(provenance_hash, timeout=60):
@@ -286,9 +291,67 @@ def calc_shapley_values(provenance_hash, timeout=60):
 
     except Exception as e:
         app.logger.error("*** calc_shapley_values: \"%s\" shapley value computation failed %s" % (provenance_hash, str(e)))
-        shapley_values = e
+        shapley_values = None
 
     return shapley_values
+
+
+def cnf_proxy(provenance_hash):
+    app.logger.debug("*** cnf_proxy: starting inexact computation for \"%s\"" % provenance_hash)
+
+    cnf_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "circuit"
+    gates_fname = provenance_path / ('/'.join(hash_dir_structure(provenance_hash))) / "gates.json"
+
+    vs = {}
+    try:
+        with open(cnf_fname, 'r') as f:
+            c = f.readlines()
+
+        app.logger.debug("*** cnf_proxy: read %d CNF clauses for \"%s\"" % (len(c), provenance_hash))
+
+        with open(gates_fname, "r") as f:
+            gates = json.load(f)
+
+        app.logger.debug("*** cnf_proxy: read %d gates (of type %s) for \"%s\"" % (len(gates), str(type(gates)), provenance_hash))
+
+        gate_id2hash = {gate_info["id"]: gate for gate, gate_info in gates.items() if gate_info["type"] == "input"}
+
+        for clause in c:
+            if clause[0] != 'p':
+                clause = clause.split()
+                clause = [int(v) for v in clause if abs(int(v)) in gate_id2hash]
+                n_pos = 0
+                n_neg = 0
+                for v in clause:
+                    if v > 0:
+                        n_pos += 1
+                    else:
+                        n_neg += 1
+                for v in clause:
+                    is_pos = v > 0
+                    v = abs(v)
+                    if v not in vs:
+                        vs[v] = 0
+
+                    vs[v] += (1 if is_pos else -1)/(len(clause) * CombCache.getInstance().comb(len(clause)-1, n_neg if is_pos else n_neg-1))
+
+        app.logger.debug("*** cnf_proxy: completed inexact computation for \"%s\"" % provenance_hash)
+
+        # s = sum(vs.values())
+        # return {x[0]: x[1]/s for x in vs.items()}
+        keys, values = [], []
+        for k, v in vs.items():
+            keys.append(gate_id2hash[k])
+            values.append(v)
+        ranks = rankdata(values, method='min')
+
+        app.logger.debug("*** cnf_proxy: ranked contribution for \"%s\"" % provenance_hash)
+
+        return {k: int(r) for k, r in zip(keys, ranks)}
+
+    except Exception as e:
+        app.logger.error("*** cnf_proxy: \"%s\" ranking computation failed %s" % (provenance_hash, str(e)))
+        return e
 
 
 @app.route("/contributing_facts/<string:output_tuples>/")
@@ -337,10 +400,14 @@ def get_contributing_facts(output_tuples):
             ans["outputs"][output_tuple] = output_tuples_data[output_tuple]
 
             if output_tuple not in facts_data:
-                export_provenance(cur, output_tuple)
-                knowledge_compilation(output_tuple)
-                shapley_values = calc_shapley_values(output_tuple)
-                # TODO - handle the case of an error during the computations
+                provenance = export_provenance(cur, output_tuple)
+                if provenance.shape[0] < 100:
+                    knowledge_compilation(output_tuple)
+                    shapley_values = calc_shapley_values(output_tuple)
+                    if shapley_values is None:
+                        shapley_values = cnf_proxy(output_tuple)
+                else:
+                    shapley_values = cnf_proxy(output_tuple)
             else:
                 # In case the output tuple is simply a fact from the db - it is the only contributor
                 shapley_values = {output_tuple: 1.0}
@@ -361,7 +428,7 @@ def get_contributing_facts(output_tuples):
         app.logger.debug("*** get_contributing_facts: provenance export completed")
 
     except Exception as e:
-        app.logger.error("*** execute_query: %s" % str(e))
+        app.logger.error("*** get_contributing_facts: %s" % str(e))
     finally:
         close_con_and_cur(con, cur)
 
@@ -397,17 +464,21 @@ def get_graph(output_tuple):
             return {ERROR: "Output tuple \"%s\" is invalid" % output_tuple}
 
         if output_tuple not in facts_data:
-            export_provenance(cur, output_tuple)
-            knowledge_compilation(output_tuple)
-            shapley_values = calc_shapley_values(output_tuple)
-            # TODO - handle the case of an error during the computations
+            prov = export_provenance(cur, output_tuple)
+            if prov.shape[0] < 100:
+                knowledge_compilation(output_tuple)
+                shapley_values = calc_shapley_values(output_tuple)
+                if shapley_values is None:
+                    shapley_values = cnf_proxy(output_tuple)
+            else:
+                shapley_values = cnf_proxy(output_tuple)
 
-            provenance_table_path = provenance_path / ('/'.join(hash_dir_structure(output_tuple))) / "provenance_as_a_table.csv"
-            if not provenance_table_path.exists():
-                app.logger.error("*** graph: \"%s\" provenance table is missing" % output_tuple)
-                return {ERROR: "Provenance table is missing"}
-
-            prov = pd.read_csv(provenance_table_path)
+            # provenance_table_path = provenance_path / ('/'.join(hash_dir_structure(output_tuple))) / "provenance_as_a_table.csv"
+            # if not provenance_table_path.exists():
+            #     app.logger.error("*** graph: \"%s\" provenance table is missing" % output_tuple)
+            #     return {ERROR: "Provenance table is missing"}
+            #
+            # prov = pd.read_csv(provenance_table_path)
 
             for _, r in prov.iterrows():
                 node_id = r.f
